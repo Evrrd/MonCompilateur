@@ -24,12 +24,14 @@
 using namespace std;
 
 char current;				// Current car	
+char nextcar;
 
 void ReadChar(void){		// Read character and skip spaces until 
 				// non space character is read
 	while(cin.get(current) && (current==' '||current=='\t'||current=='\n'))
 	   	cin.get(current);
 }
+
 
 void Error(string s){
 	cerr<< s << endl;
@@ -47,6 +49,32 @@ void AdditiveOperator(void){
 		ReadChar();
 	else
 		Error("Opérateur additif attendu");	   // Additive operator expected
+}
+
+
+// <OpérateurRelationnel> ::= '=' | '<>' | '<' | '<=' | '>=' | '>' 
+
+void RelationalOperator(void){
+
+	if((current=='<')||(current=='>')){
+
+		bool verif = false;
+		if (current == '<'){
+			verif = true;
+		}
+
+		ReadChar();
+
+		if (current=='=' || (verif == true && current == '>')){
+			ReadChar();
+		}
+		
+	}
+	else {
+		Error("< or > or = attendu");
+	}
+
+		
 }
 		
 void Digit(void){
@@ -97,6 +125,17 @@ void ArithmeticExpression(void){
 			cout << "\tsubq	%rbx, %rax"<<endl;	// substract both operands
 		cout << "\tpush %rax"<<endl;			// store result
 	}
+
+}
+
+
+
+// <expression> ::= <ExpressionArithmétique> | <ExpressionArithmétique> <OpérateurRelationnel> <ExpressionArithmétique> 
+
+
+void expression(void){
+	
+	Term():
 
 }
 

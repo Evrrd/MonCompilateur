@@ -17,7 +17,6 @@
 
 // Build with "make compilateur"
 
-
 #include <string>
 #include <iostream>
 #include <cstdlib>
@@ -51,7 +50,7 @@ void AdditiveOperator(void){
 }
 		
 void Digit(void){
-	if((current<'0')||(current>'9'))
+	if((current<'0')||(current>'9')) // code ASCII
 		Error("Chiffre attendu");		   // Digit expected
 	else{
 		cout << "\tpush $"<<current<<endl;
@@ -60,6 +59,9 @@ void Digit(void){
 }
 
 void ArithmeticExpression(void);			// Called by Term() and calls Term()
+
+
+// Term := Digit | "(" ArithmeticExpression ")"
 
 void Term(void){
 	if(current=='('){
@@ -73,9 +75,12 @@ void Term(void){
 	else 
 		if (current>='0' && current <='9')
 			Digit();
-	     	else
+	    else
 			Error("'(' ou chiffre attendu");
 }
+
+
+// ArithmeticExpression := Term {AdditiveOperator Term}*
 
 void ArithmeticExpression(void){
 	char adop;
@@ -84,10 +89,10 @@ void ArithmeticExpression(void){
 		adop=current;		// Save operator in local variable
 		AdditiveOperator();
 		Term();
-		cout << "\tpop %rbx"<<endl;	// get first operand
-		cout << "\tpop %rax"<<endl;	// get second operand
+		cout << "\tpop %rbx \t#pop first ope"<<endl;	// get first operand
+		cout << "\tpop %rax \t#pop second ope"<<endl;	// get second operand
 		if(adop=='+')
-			cout << "\taddq	%rbx, %rax"<<endl;	// add both operands
+			cout << "\taddq	%rbx, %rax \t#ope + ope"<<endl;	// add both operands
 		else
 			cout << "\tsubq	%rbx, %rax"<<endl;	// substract both operands
 		cout << "\tpush %rax"<<endl;			// store result

@@ -299,10 +299,107 @@ void AssignementStatement(void){
 	cout << "\tpop "<<variable<<endl;
 }
 
+// "IF" Expression "THEN" Statement [ "ELSE" Statement ]
+void IfStatement(){
+
+	
+	current=(TOKEN) lexer->yylex();
+	Expression();
+
+	current=(TOKEN) lexer->yylex();
+
+	if (current!=THEN)
+		Error("THEN attendu après IF")
+
+	Statement();
+
+	current=(TOKEN) lexer->yylex();
+	if (current==ELSE)
+		Statement();
+}
+
+
+// "WHILE" Expression "DO" Statement
+
+void WhileStatement(){
+
+	current=(TOKEN) lexer->yylex();
+	Expression();
+
+	current=(TOKEN) lexer->yylex();
+
+	if (current!=DO){
+		Error("DO Attendu après WHILE")
+	}
+
+	Statement();
+}
+
+// "FOR" AssignementStatement "To" Expression "DO" Statement
+
+void ForStatement(){
+
+	current=(TOKEN) lexer->yylex();
+	AssignementStatement();
+
+	current=(TOKEN) lexer->yylex();
+
+	if (current!=TO){
+		Error("To Attendu après FOR")
+	}
+
+	Expression();
+
+	if (current!=DO){
+		Error("DO Attendu après WHILE")
+	}
+
+	Statement();
+
+
+}
+
+// "BEGIN" Statement { ";" Statement } "END"
+
+void BlockStatement(){
+	
+
+}
+
 // Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement
 void Statement(void){
-	AssignementStatement();
+
+
+	string s = lexer->YYText();
+	// if :=
+	if (!strcmp(s,":=")){
+		AssignementStatement();
+	}
+
+	//else if IF
 	
+
+	else if (!strcmp(s,"IF")){
+		IfStatement();
+	}
+
+	
+	// else if WHILE
+
+	else if (!strcmp(s,"WHILE")){
+		WhileStatement();
+	}
+
+	// else if FOR
+
+	else if (!strcmp(s,"FOR")){
+		ForStatement();
+	}
+	// else if BLOCK
+
+	else if (!strcmp(s,"BEGIN")){
+		BlockStatement();
+	}
 }
 
 // StatementPart := Statement {";" Statement} "."

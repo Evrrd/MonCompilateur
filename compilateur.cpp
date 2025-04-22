@@ -302,6 +302,7 @@ void AssignementStatement(void){
 // Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement
 void Statement(void){
 	AssignementStatement();
+	
 }
 
 // StatementPart := Statement {";" Statement} "."

@@ -32,8 +32,15 @@ using namespace std;
 // 	   	cin.get(current);
 // }
 
-char current, lookedAhead;                // Current char    
+enum OPREL {equ, diff, infe, supe, inf, sup, unknown};
+char current, lookedAhead;				// Current char	
 int NLookedAhead=0;
+set<string> DeclaredVariables;
+unsigned long TagNumber=0;
+
+bool IsDeclared(char c){
+	return DeclaredVariables.find(string(1,c))!=DeclaredVariables.end();
+}
 
 void ReadChar(void){
     if(NLookedAhead>0){
@@ -104,57 +111,28 @@ void MultiplicativeOperator(void){
 }
 
 // <OpérateurRelationnel> ::= '=' | '<>' | '<' | '<=' | '>=' | '>' 
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
-
-void RelationalOperator(void){
-
-	LookAhead();
-
-	if ((lookedAhead == '=')){
-		if((current=='<')||(current=='>') || (current=='=') || (current=='!')){
-			ReadChar();
-			ReadChar();
-		}
-		else {
-			Error("RelationalOperator attendu");
-		}
-	}
-	else {
-		if((current=='<')||(current=='>')){
-			ReadChar();
-		}
-		else if (current=='='){
-			Error("second '=' attendu");
-		}
-		else if (current=='!'){
-			Error("'=' attendu après '!'");
-		}
-	}
-		
-}
 
 // Factor := Number | Letter | "(" Expression ")"| "!" Factor
 
 void Factor(void){
-	if((current>='0')||(current<='9')){
-		Number();
-	}
-	else if ((current>='a') || (current<='z')){
-		Letter();
-	}
-	if (current=='('){
+	if(current=='('){
 		ReadChar();
 		Expression();
-
-		if (current != ')'){
-			Error("')' était attendu");
-		}
+		if(current!=')')
+			Error("')' était attendu");		// ")" expected
+		else
+			ReadChar();
 	}
-	if (current =='!'){
-		ReadChar();
-		Factor();
-	}
+	else 
+		if (current>='0' && current <='9')
+			Number();
+	     	else
+				if(current>='a' && current <='z')
+					Letter();
+				else
+					Error("'(' ou chiffre ou lettre attendue");
 }
+
 
 // Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
 
@@ -170,19 +148,20 @@ void Digit(void){
 //Number := Digit{Digit}
 
 void Number(void){
-
-	if((current<'0')||(current>'9')) // code ASCII
-		Error("Chiffre attendu");		   // Digit expected
-	else{
-		string nombre;
-		while((current>='0'||current<='9')){
-			nombre += current;
-			ReadChar();
-		}
-		long nb = std::stol(nombre)
-		cout << "\tpush $"<<nb<<endl;
+	unsigned long long number;
+	if((current<'0')||(current>'9'))
+		Error("chiffre attendu");		   // Digit expected
+	else
+		number=current-'0';
+	ReadChar();
+	while(current>='0' && current <='9'){
+		number*=10;
+		number+=current-'0';
+		ReadChar();
 	}
+	cout <<"\tpush $"<<number<<endl;
 }
+
 
 // Letter := "a"|...|"z"
 
@@ -260,17 +239,155 @@ void SimpleExpression(void){
 
 }
 
+// DeclarationPart := "[" Letter {"," Letter} "]"
+void DeclarationPart(void){
+	if(current!='[')
+		Error("caractère '[' attendu");
+	cout << "\t.data"<<endl;
+	cout << "\t.align 8"<<endl;
+	
+	ReadChar();
+	if(current<'a'||current>'z')
+		Error("Une lettre minuscule était attendue");
+	cout << current << ":\t.quad 0"<<endl;
+	DeclaredVariables.insert(string(1,current));
+	ReadChar();
+	while(current==','){
+		ReadChar();
+		if(current<'a'||current>'z')
+			Error("Une lettre minuscule était attendue");
+		cout << current << ":\t.quad 0"<<endl;
+		DeclaredVariables.insert(string(1,current));
+		ReadChar();
+	}
+	if(current!=']')
+		Error("Caractère ']' attendu");
+	ReadChar();
+}
+
+
+// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
+OPREL RelationalOperator(void){
+	if(current!='<'&&current!='>'&&current!='!'&&current!='=')
+		return unknown;
+	LookAhead();
+	if(lookedAhead=='=')
+		switch(current){
+			case '=':
+				ReadChar(); ReadChar(); 
+				return equ;
+			case '!': 
+				ReadChar(); ReadChar(); 
+				return diff;
+			case '<': 
+				ReadChar(); ReadChar(); 
+				return infe;
+			case '>': 
+				ReadChar(); ReadChar(); 
+				return supe;
+		}
+	switch(current){
+		case '=':	// Next is not '='
+				Error("utilisez '==' comme opérateur d'égalité");
+		case '<':	ReadChar();
+				return inf;
+		case '>':	ReadChar();
+				return sup;
+		default:	Error("opérateur relationnel inconnu");
+		
+	}
+	return unknown;	
+}
 
 
 
 // <expression> ::= <ExpressionArithmétique> | <ExpressionArithmétique> <OpérateurRelationnel> <ExpressionArithmétique> 
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
-
-void expression(void){
-	
-	Term():
-
+void Expression(void){
+	OPREL oprel;
+	SimpleExpression();
+	if(current=='='||current=='!'||current=='<'||current=='>'){
+		oprel=RelationalOperator();
+		SimpleExpression();
+		cout << "\tpop %rax"<<endl;
+		cout << "\tpop %rbx"<<endl;
+		cout << "\tcmpq %rax, %rbx"<<endl;
+		switch(oprel){
+			case equ:
+				cout << "\tje Vrai"<<++TagNumber<<"\t# If equal"<<endl;
+				break;
+			case diff:
+				cout << "\tjne Vrai"<<++TagNumber<<"\t# If different"<<endl;
+				break;
+			case supe:
+				cout << "\tjae Vrai"<<++TagNumber<<"\t# If above or equal"<<endl;
+				break;
+			case infe:
+				cout << "\tjbe Vrai"<<++TagNumber<<"\t# If below or equal"<<endl;
+				break;
+			case inf:
+				cout << "\tjb Vrai"<<++TagNumber<<"\t# If below"<<endl;
+				break;
+			case sup:
+				cout << "\tja Vrai"<<++TagNumber<<"\t# If above"<<endl;
+				break;
+			default:
+				Error("Opérateur de comparaison inconnu");
+		}
+		cout << "\tpush $0\t\t# False"<<endl;
+		cout << "\tjmp Suite"<<TagNumber<<endl;
+		cout << "Vrai"<<TagNumber<<":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True"<<endl;	
+		cout << "Suite"<<TagNumber<<":"<<endl;
+	}
 }
+
+// AssignementStatement := Letter "=" Expression
+void AssignementStatement(void){
+	char letter;
+	if(current<'a'||current>'z')
+		Error("lettre minuscule attendue");
+	letter=current;
+	if(!IsDeclared(letter)){
+		cerr << "Erreur : Variable '"<<letter<<"' non déclarée"<<endl;
+		exit(-1);
+	}
+	ReadChar();
+	if(current!='=')
+		Error("caractère '=' attendu");
+	ReadChar();
+	Expression();
+	cout << "\tpop "<<letter<<endl;
+}
+
+// Statement := AssignementStatement
+void Statement(void){
+	AssignementStatement();
+}
+
+// StatementPart := Statement {";" Statement} "."
+void StatementPart(void){
+	cout << "\t.text\t\t# The following lines contain the program"<<endl;
+	cout << "\t.globl main\t# The main function must be visible from outside"<<endl;
+	cout << "main:\t\t\t# The main function body :"<<endl;
+	cout << "\tmovq %rsp, %rbp\t# Save the position of the stack's top"<<endl;
+	Statement();
+	while(current==';'){
+		ReadChar();
+		Statement();
+	}
+	if(current!='.')
+		Error("caractère '.' attendu");
+	ReadChar();
+}
+
+
+// Program := [DeclarationPart] StatementPart
+void Program(void){
+	if(current=='[')
+		DeclarationPart();
+	StatementPart();	
+}
+
 
 int main(void){	// First version : Source code on standard input and assembly code on standard output
 	// Header for gcc assembler / linker

@@ -24,6 +24,7 @@ ws      [ \t\n\r]+
 alpha   [A-Za-z]
 digit   [0-9]
 number  {digit}+
+keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY)
 id	{alpha}({alpha}|{digit})*
 addop	(\+|\-|\|\|)
 mulop	(\*|\/|%|\&\&)
@@ -36,6 +37,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 {mulop}		return MULOP;
 {relop}		return RELOP;
 {number}	return NUMBER;
+{keyboard}	return KEYBOARD;
 {id}		return ID;
 {stringconst}	return STRINGCONST;
 "["		return RBRACKET;
@@ -47,15 +49,6 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "("		return RPARENT;
 ")"		return LPARENT;
 "!"		return NOT;
-"IF"	return IF;
-"THEN"	return THEN;
-"ELSE"	return ELSE;
-"WHILE"	return WHILE;
-"DO"	return DO;
-"FOR"	return FOR; 
-"To"	return TO;
-"BEGIN"	return BEGIN;
-"END"	return END;
 
 <<EOF>>		return FEOF;
 {ws}    {/* skip blanks and tabs */};

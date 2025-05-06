@@ -240,6 +240,76 @@ void DeclarationPart(void){
 	current=(TOKEN) lexer->yylex();
 }
 
+//  VarDeclaration := Ident {"," Ident} ":" Type
+void VarDeclaration(void){
+
+	set<string> varset;
+	current=(TOKEN) lexer->yylex();
+	if(current!=ID)
+		Error("Un identificater était attendu");
+	string variable = lexer->YYText();
+	varset.insert(variable);
+	current=(TOKEN) lexer->yylex();
+	while (current==COMMA){
+		current=(TOKEN) lexer->yylex();
+		if(current!=ID){
+			Error("Un identificateur était attendu");
+		}
+		variable = lexer->YYText();
+		varset.insert(variable);
+		current=(TOKEN) lexer->yylex();
+	}
+
+	
+
+	if (current != COLON){
+		Error("Lors d'une déclaration, un : est attendu après l'identificateur");
+	}
+	current=(TOKEN) lexer->yylex();
+
+	if (strcmp(lexer->YYText(), "BOOLEAN")==0){
+		for (string var : varset){
+			cout << var << ":\t.quad 0"<<endl;
+			DeclaredVariables[var] = BOOLEAN;
+		}
+		
+	}
+	
+	else if (strcmp(lexer->YYText(), "INTEGER")==0){
+		for (string var : varset){
+			cout << var << ":\t.quad 0"<<endl;
+			DeclaredVariables[var] = UNSIGNED_INT;
+		}
+		
+	}
+}
+
+
+
+
+// VarDeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
+void VarDeclarationPart(void){
+	
+	VarDeclaration();
+
+
+	current=(TOKEN) lexer->yylex();
+	while (current == SEMICOLON){
+		VarDeclaration();
+		current=(TOKEN) lexer->yylex();
+	}
+	
+	
+	if (current != DOT){
+		Error("'.' attendu à la fin d'un déclaration de variable ");
+	}
+
+
+}
+
+
+
+
 // RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
 OPREL RelationalOperator(void){
 	OPREL oprel;
@@ -518,13 +588,13 @@ void StatementPart(void){
 	current=(TOKEN) lexer->yylex();
 }
 
-
+// Program := VarDeclarationPart StatementPart
 // Program := [DeclarationPart] StatementPart
 void Program(void){
-	if(current==RBRACKET){
-		DeclarationPart();	
+	if (current==KEYBOARD && strcmp(lexer->YYText(), "VAR") == 0){
+		VarDeclarationPart();
+		StatementPart();
 	}
-	StatementPart();	
 }
 
 int main(void){	// First version : Source code on standard input and assembly code on standard output

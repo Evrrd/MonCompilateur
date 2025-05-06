@@ -24,7 +24,7 @@ ws      [ \t\n\r]+
 alpha   [A-Za-z]
 digit   [0-9]
 number  {digit}+
-keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY)
+keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY|VAR)
 id	{alpha}({alpha}|{digit})*
 addop	(\+|\-|\|\|)
 mulop	(\*|\/|%|\&\&)
@@ -45,6 +45,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 ","		return COMMA;
 ";"		return SEMICOLON;
 "."		return DOT;
+":" 	return COLON;
 ":="		return ASSIGN;
 "("		return RPARENT;
 ")"		return LPARENT;

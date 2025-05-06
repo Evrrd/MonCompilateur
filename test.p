@@ -1,3 +1,3 @@
-[a]
-a:=5+6;
-IF (a > 40) THEN DISPLAY 1 ELSE DISPLAY 0.
+VAR 
+     a,b,c   : BOOLEAN ; 
+     d,e,f,g : INTEGER.

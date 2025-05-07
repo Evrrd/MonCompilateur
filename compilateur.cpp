@@ -32,7 +32,7 @@ using namespace std;
 enum OPREL {EQU, DIFF, INF, SUP, INFE, SUPE, WTFR};
 enum OPADD {ADD, SUB, OR, WTFA};
 enum OPMUL {MUL, DIV, MOD, AND ,WTFM};
-enum TYPES {UNSIGNED_INT, BOOLEAN};
+enum TYPES {UNSIGNED_INT, BOOLEAN, DOUBLE, CHAR};
 
 TOKEN current;				// Current token
 
@@ -90,6 +90,11 @@ TYPES Number(void){
 	return UNSIGNED_INT;
 }
 
+TYPES Flottant(void){
+	cout << "\tfld $"<<atof(lexer->YYText())<<endl;
+	current=(TOKEN) lexer->yylex();
+	return DOUBLE;
+}
 TYPES Expression(void);			// Called by Term() and calls Term()
 
 TYPES Factor(void){
@@ -105,6 +110,9 @@ TYPES Factor(void){
 	else 
 		if (current==NUMBER)
 			return Number();
+		else if (current==FLOTTANT){
+			return Flottant();
+		}
 		else
 			if(current==ID)
 				return Identifier();
@@ -139,29 +147,55 @@ TYPES Term(void){
 		if (type != type2){
 			Error("The two factor doesn't have the same type !!");
 		}
-		cout << "\tpop %rbx"<<endl;	// get first operand
-		cout << "\tpop %rax"<<endl;	// get second operand
-		switch(mulop){
-			case AND:
-				cout << "\tmulq	%rbx"<<endl;	// a * b -> %rdx:%rax
-				cout << "\tpush %rax\t# AND"<<endl;	// store result
-				break;
-			case MUL:
-				cout << "\tmulq	%rbx"<<endl;	// a * b -> %rdx:%rax
-				cout << "\tpush %rax\t# MUL"<<endl;	// store result
-				break;
-			case DIV:
-				cout << "\tmovq $0, %rdx"<<endl; 	// Higher part of numerator  
-				cout << "\tdiv %rbx"<<endl;			// quotient goes to %rax
-				cout << "\tpush %rax\t# DIV"<<endl;		// store result
-				break;
-			case MOD:
-				cout << "\tmovq $0, %rdx"<<endl; 	// Higher part of numerator  
-				cout << "\tdiv %rbx"<<endl;			// remainder goes to %rdx
-				cout << "\tpush %rdx\t# MOD"<<endl;		// store result
-				break;
-			default:
-				Error("opérateur multiplicatif attendu");
+		if (type == UNSIGNED_INT){
+			cout << "\tpop %rbx"<<endl;	// get first operand
+			cout << "\tpop %rax"<<endl;	// get second operand
+			switch(mulop){
+				case AND:
+					cout << "\tmulq	%rbx"<<endl;	// a * b -> %rdx:%rax
+					cout << "\tpush %rax\t# AND"<<endl;	// store result
+					break;
+				case MUL:
+					cout << "\tmulq	%rbx"<<endl;	// a * b -> %rdx:%rax
+					cout << "\tpush %rax\t# MUL"<<endl;	// store result
+					break;
+				case DIV:
+					cout << "\tmovq $0, %rdx"<<endl; 	// Higher part of numerator  
+					cout << "\tdiv %rbx"<<endl;			// quotient goes to %rax
+					cout << "\tpush %rax\t# DIV"<<endl;		// store result
+					break;
+				case MOD:
+					cout << "\tmovq $0, %rdx"<<endl; 	// Higher part of numerator  
+					cout << "\tdiv %rbx"<<endl;			// remainder goes to %rdx
+					cout << "\tpush %rdx\t# MOD"<<endl;		// store result
+					break;
+				default:
+					Error("opérateur multiplicatif attendu");
+			}
+		}
+		else if (type == DOUBLE){
+			cout << "\tfstps %rbx #take sommet de la pile + depilement" << endl;
+
+			switch(mulop){
+				case AND:
+					cout << "\tfmuls %rbx %st(0) # rbx * st(0) into st(0)" << endl;
+					break;
+				case MUL:
+					cout << "\tfmuls %rbx %st(0) # rbx * st(0) into st(0)" << endl;
+					break;
+				case DIV:
+					cout << "\tfdivs %rbx %st(0) # rbx / st(0) into st(0)" << endl; // quotient goes to %rax
+					cout << "\tflds %rax # empile quotient" << endl;
+					break;
+
+				case MOD:
+					cout << "\tfdivs %rbx %st(0) # rbx / st(0) into st(0)" << endl; // rest is in rdx
+					cout << "\tflds %rdx # empile reste" << endl;
+					break;
+
+				default:
+					Error("opérateur multiplicatif attendu");
+			}
 		}
 	}
 	return type;
@@ -193,27 +227,51 @@ TYPES SimpleExpression(void){
 		if (type != type2){
 			Error("Type différenet des terms de l'expression");
 		}
-		cout << "\tpop %rbx"<<endl;	// get first operand
-		cout << "\tpop %rax"<<endl;	// get second operand
-		switch(adop){
-			case OR:
-				cout << "\taddq	%rbx, %rax\t# OR"<<endl;// operand1 OR operand2
-				break;			
-			case ADD:
-				cout << "\taddq	%rbx, %rax\t# ADD"<<endl;	// add both operands
-				break;			
-			case SUB:	
-				cout << "\tsubq	%rbx, %rax\t# SUB"<<endl;	// substract both operands
-				break;
-			default:
-				Error("opérateur additif inconnu");
+		if (type == UNSIGNED_INT){
+			cout << "\tpop %rbx"<<endl;	// get first operand
+			cout << "\tpop %rax"<<endl;	// get second operand
+			switch(adop){
+				case OR:
+					cout << "\taddq	%rbx, %rax\t# OR"<<endl;// operand1 OR operand2
+					break;			
+				case ADD:
+					cout << "\taddq	%rbx, %rax\t# ADD"<<endl;	// add both operands
+					break;			
+				case SUB:	
+					cout << "\tsubq	%rbx, %rax\t# SUB"<<endl;	// substract both operands
+					break;
+				default:
+					Error("opérateur additif inconnu");
+			}
+			cout << "\tpush %rax"<<endl;			// store result
 		}
-		cout << "\tpush %rax"<<endl;			// store result
+
+		if (type == DOUBLE){
+			cout << "\tfstp %rbx  #dep" << endl;
+			switch (adop){
+
+				case OR:
+					cout << "\tfadd %rbx %st(0) " << endl;
+					break;
+
+				case ADD :
+					cout << "\tfadd %rbx %st(0) " << endl;
+					break;
+				
+				case SUB:
+					cout << "\tfsub %rbx %st(0) " << endl;
+					break;
+				default:
+					Error("opérateur additif inconnu");
+
+			}
+		}
 	}
 	return type;
 
 }
 
+/*
 // DeclarationPart := "[" Ident {"," Ident} "]"
 void DeclarationPart(void){
 	if(current!=RBRACKET)
@@ -239,6 +297,7 @@ void DeclarationPart(void){
 		Error("caractère ']' attendu");
 	current=(TOKEN) lexer->yylex();
 }
+*/
 
 //  VarDeclaration := Ident {"," Ident} ":" Type
 void VarDeclaration(void){
@@ -269,7 +328,7 @@ void VarDeclaration(void){
 
 	if (strcmp(lexer->YYText(), "BOOLEAN")==0){
 		for (string var : varset){
-			cout << var << ":\t.quad 0"<<endl;
+			cout << var << ":\t.quad 0"<<endl; // .boolean 0
 			DeclaredVariables[var] = BOOLEAN;
 		}
 		
@@ -280,7 +339,20 @@ void VarDeclaration(void){
 			cout << var << ":\t.quad 0"<<endl;
 			DeclaredVariables[var] = UNSIGNED_INT;
 		}
-		
+	}
+
+	else if (strcmp(lexer->YYText(), "DOUBLE")==0){
+		for (string var : varset){
+			cout << var << ":\t.double 0.0"<<endl;
+			DeclaredVariables[var] = DOUBLE;
+		}
+	}
+
+	else if (strcmp(lexer->YYText(), "CHAR")==0){
+		for (string var : varset){
+			cout << var << ":\t.byte 0"<<endl;
+			DeclaredVariables[var] = CHAR;
+		}
 	}
 }
 
@@ -380,7 +452,7 @@ void Statement();
 // AssignementStatement := Identifier ":=" Expression
 void AssignementStatement(void){
 	string variable;
-
+	Identifier(); // ?
 	
 	if(!IsDeclared(lexer->YYText())){
 		cerr << "Erreur : Variable '"<<lexer->YYText()<<"' non déclarée"<<endl;

@@ -23,6 +23,7 @@ stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]
 digit   [0-9]
+flottant {digit}+[\.]{digit}+
 number  {digit}+
 keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY|VAR)
 id	{alpha}({alpha}|{digit})*
@@ -36,6 +37,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 {addop}		return ADDOP;
 {mulop}		return MULOP;
 {relop}		return RELOP;
+{flottant}	return FLOTTANT:
 {number}	return NUMBER;
 {keyboard}	return KEYBOARD;
 {id}		return ID;

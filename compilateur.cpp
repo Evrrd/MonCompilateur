@@ -92,9 +92,21 @@ TYPES Number(void){
 }
 
 TYPES Flottant(void){
-	cout << "\tfld $"<<atof(lexer->YYText())<<endl;
+	double d;					// 64-bit float
+	unsigned int *i;			// pointer to a 32 bit unsigned int 
+
+	// took that code from teacher
+	d=atof(lexer->YYText());
+	i=(unsigned int *) &d; // i points to the const double
+	//cout <<"\tpush $"<<*i<<"\t# Conversion of "<<d<<endl;
+	// Is equivalent to : 
+	cout <<"\tsubq $8,%rsp\t\t\t# allocate 8 bytes on stack's top"<<endl;
+	cout <<"\tmovl	$"<<*i<<", (%rsp)\t# Conversion of "<<d<<" (32 bit high part)"<<endl;
+	cout <<"\tmovl	$"<<*(i+1)<<", 4(%rsp)\t# Conversion of "<<d<<" (32 bit low part)"<<endl;
 	current=(TOKEN) lexer->yylex();
 	return DOUBLE;
+
+
 }
 TYPES Expression(void);			// Called by Term() and calls Term()
 
@@ -114,9 +126,10 @@ TYPES Factor(void){
 		else if (current==FLOTTANT){
 			return Flottant();
 		}
-		else
-			if(current==ID)
-				return Identifier();
+		else if(current==ID)
+			return Identifier();
+		else if(current==CHARCONST)	
+			return 
 			else
 				Error("'(' ou chiffre ou lettre attendue");
 
@@ -177,28 +190,33 @@ TYPES Term(void){
 			}
 		}
 		else if (type == DOUBLE){
-			cout << "\tfstps %rbx #take sommet de la pile + depilement" << endl;
+			cout << "\tfldl (%rsp) #empile first into float pile " << endl;
+			cout << "\taddq $8, %rsp #depilement int pile " << endl;
+			cout << "\tfldl (%rsp) #empile second into float pile " << endl;
+			cout << "\taddq $8, %rsp #depilement int pile " << endl;
 
 			switch(mulop){
 				case AND:
-					cout << "\tfmuls %rbx %st(0) # rbx * st(0) into st(0)" << endl;
+					cout << "\tfmulp %st(0),%st(1) # st0 && st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 				case MUL:
-					cout << "\tfmuls %rbx %st(0) # rbx * st(0) into st(0)" << endl;
+					cout << "\tfmulp %st(0),%st(1) # st0 * st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 				case DIV:
-					cout << "\tfdivs %rbx %st(0) # rbx / st(0) into st(0)" << endl; // quotient goes to %rax
+					cout << "\tfdivp %st(0),%st(1) # st0 / st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl; // quotient goes to %rax
 					cout << "\tflds %rax # empile quotient" << endl;
 					break;
 
 				case MOD:
-					cout << "\tfdivs %rbx %st(0) # rbx / st(0) into st(0)" << endl; // rest is in rdx
+					cout << "\tfdivp %st(0),%st(1) # st0 % st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl; // rest is in rdx
 					cout << "\tflds %rdx # empile reste" << endl;
 					break;
 
 				default:
 					Error("opérateur multiplicatif attendu");
 			}
+			cout << "\tsubq $8, %rsp    # Empilement d'une valeur non initialisée" << endl;
+			cout << "\tfstpl (%rsp)     # copie %st(0) au sommet de la pile générale et dépile la pile de registres %st(X)" << endl;
 		}
 	}
 	return type;
@@ -253,18 +271,19 @@ TYPES SimpleExpression(void){
 			cout << "\tfldl (%rsp) #empile first into float pile " << endl;
 			cout << "\taddq $8, %rsp #depilement int pile " << endl;
 			cout << "\tfldl (%rsp) #empile second into float pile " << endl;
+			cout << "\taddq $8, %rsp #depilement int pile " << endl;
 			switch (adop){
 
 				case OR:
-					cout<<"\tfaddpl	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
+					cout<<"\tfaddp	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 
 				case ADD :
-					cout<<"\tfaddpl	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
+					cout<<"\tfaddp	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 				
 				case SUB:
-					cout<<"\tfsublp	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
+					cout<<"\tfsubp	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 				default:
 					Error("opérateur additif inconnu");
@@ -419,9 +438,23 @@ TYPES Expression(void){
 		if (type != type2){
 			Error("PAs le même type entre les expressions");
 		}
-		cout << "\tpop %rax"<<endl;
-		cout << "\tpop %rbx"<<endl;
-		cout << "\tcmpq %rax, %rbx"<<endl;
+		if (type == DOUBLE){
+			cout << "\tfldl (%rsp) #empile first into float pile " << endl;
+			cout << "\taddq $8, %rsp #depilement int pile " << endl;
+			cout << "\tfldl (%rsp) #empile second into float pile " << endl;
+			cout << "\taddq $8, %rsp #depilement int pile " << endl;
+			cout<<"\tfcomip %st(1)\t\t# comparato st0 st1	"<<endl;
+
+
+			cout<<"\tfaddp %st(1)\t# pop nothing"<<endl;
+
+		}
+		else {
+			cout << "\tpop %rax"<<endl;
+			cout << "\tpop %rbx"<<endl;
+			cout << "\tcmpq %rax, %rbx"<<endl;
+		}
+		
 		switch(oprel){
 			case EQU:
 				cout << "\tje Vrai"<<++TagNumber<<"\t# If equal"<<endl;
@@ -479,6 +512,8 @@ void AssignementStatement(void){
 	if (type != type2){
 		Error("L'identifiant et l'expression non pas le même type");
 	}
+
+	cout << "\tpop "<<variable<<endl;
 	
 }
 
@@ -580,26 +615,61 @@ void DisplayStatement(){
 	current = (TOKEN) lexer->yylex();
 	TYPES type = Expression();
 	if (type == INTEGER){
-		cout << "pop %rdx                     # The value to be displayed" << endl;
-		cout << "movq $FormatString1, %rsi    # %llu\n" << endl;
-		cout << "movl    $1, %edi" << endl;
-		cout << "movl    $0, %eax" << endl;
-		cout << "call    __printf_chk@PLT" << endl;
+		cout << "\tpop %rdx                     # The value to be displayed" << endl;
+		cout << "\tmovq $FormatString1, %rsi    # %llu\n" << endl;
+		cout << "\tmovl    $1, %edi" << endl;
+		cout << "\tmovl    $0, %eax" << endl;
+		cout << "\tcall    __printf_chk@PLT" << endl;
 	}
 	else if (type == DOUBLE){
-		cout << "pop %rdx                     # The value to be displayed" << endl;
-		cout << "movq $FormatString1, %rsi    # %f\n" << endl;
-		cout << "movl    $1, %edi" << endl;
-		cout << "movl    $0, %eax" << endl;
-		cout << "call    __printf_chk@PLT" << endl;
+		/*
+		Tentative
+		cout << "\tfldl (%rsp) 					#empile first into float pile " << endl;
+		cout << "\taddq $8, %rsp 				#depilement int pile " << endl;
+		cout << "\tfstpl (%rsp)                  # The value to be displayed" << endl;
+		cout << "\tmovq $FormatString2, %rdi    # %f\n" << endl;
+		cout << "\tmovl    $1, %edi" << endl;
+		cout << "\tmovl    $0, %eax" << endl;
+		cout << "\tcall    __printf_chk@PLT" << endl;
+		*/
+		
+		cout << "\tmovsd	(%rsp), %xmm0\t\t# &stack top -> %xmm0"<<endl;
+		cout << "\tsubq	$16, %rsp\t\t# allocation for 3 additional doubles"<<endl;
+		cout << "\tmovsd %xmm0, 8(%rsp)"<<endl;
+		
+		/*
+		cout << "\tfldl (%rsp) 					#empile first into float pile " << endl;
+		cout << "\tsubq $16, %rsp 				#depilement int pile " << endl;
+		cout << "\tfstpl (%rsp)                  # The value to be displayed" << endl;
+		cout << "\tmovq $FormatString2, %rsi    # %f\n" << endl;
+		cout << "\tmovl    $1, %edi" << endl;
+		cout << "\tmovl    $0, %eax" << endl; 
+		cout << "\tcall    __printf_chk@PLT" << endl;
+		*/
+		
+		cout << "\tmovq $FormatString2, %rdi\t# \"%lf\\n\""<<endl;
+		cout << "\tmovq	$1, %rax"<<endl;
+		cout << "\tcall	printf"<<endl;
+		cout << "nop"<<endl;
+		cout << "\taddq $24, %rsp\t\t\t# pop nothing"<<endl;
+		
+
 	}
 
 	else if (type == CHAR){
-		cout << "pop %rdx                     # The value to be displayed" << endl;
-		cout << "movq $FormatString1, %rsi    # %c\n" << endl;
-		cout << "movl    $1, %edi" << endl;
-		cout << "movl    $0, %eax" << endl;
-		cout << "call    __printf_chk@PLT" << endl;
+		/*
+		cout << "\tpop %rdx                     # The value to be displayed" << endl;
+		cout << "\tmovq $FormatString3, %rsi    # %c\n" << endl;
+		cout << "\tmovl    $1, %edi" << endl;
+		cout << "\tmovl    $0, %eax" << endl;
+		cout << "\tcall    __printf_chk@PLT" << endl;
+		*/
+
+		cout<<"\tpop %rsi\t\t\t# get character in the 8 lowest bits of %si"<<endl;
+		cout << "\tmovq $FormatString3, %rdi\t# \"%c\\n\""<<endl;
+		cout << "\tmovl	$0, %eax"<<endl;
+		cout << "\tcall	printf@PLT"<<endl;
+
 	}
 
 }
@@ -701,7 +771,7 @@ int main(void){	// First version : Source code on standard input and assembly co
 	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
 	cout << "\t.data"<<endl;
 	cout << "\tFormatString1:    .string \"%llu\"    # used by printf to display 64-bit unsigned integers"<< endl;
-	cout << "\tFormatString2:    .string \"%f\"    # used by printf to display 64-bit float"<< endl;
+	cout << "\tFormatString2:    .string \"%lf\"    # used by printf to display 64-bit float"<< endl;
 	cout << "\tFormatString3:    .string \"%c\"    # used by printf to display 64-bit char"<< endl;
 	// Let's proceed to the analysis and code production
 	current=(TOKEN) lexer->yylex();

@@ -1,9 +1,10 @@
 VAR 
-     a,b,c   : INTEGER ; 
-     d,e,f,g : DOUBLE.
+     a,b   : INTEGER ; 
+     f,e : DOUBLE.
 a := 3;
-f := 0.6;
-e := f + 4.1;
+b := a + 2;
+f := 2.5;
+e := f * 2.0;
 BEGIN
      DISPLAY e.
 END.

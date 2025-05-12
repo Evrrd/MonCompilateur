@@ -7,6 +7,7 @@
 // tokens can be read using lexer->yylex()
 // lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
 // and lexer->YYText() returns the lexicon entry as a string
+// https://learn.microsoft.com/fr-fr/dotnet/standard/base-types/regular-expression-language-quick-reference
 
 #include "tokeniser.h"
 #include <iostream>
@@ -19,6 +20,7 @@ using namespace std;
 %option c++
 %option yylineno
 
+charconst (\'.?\')
 stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]
@@ -41,6 +43,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 {number}	return NUMBER;
 {keyboard}	return KEYBOARD;
 {id}		return ID;
+{charconst}		return CHARCONST
 {stringconst}	return STRINGCONST;
 "["		return RBRACKET;
 "]"		return LBRACKET;

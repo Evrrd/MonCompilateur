@@ -6,5 +6,6 @@ b := a + 2;
 f := 2.5;
 e := f * 2.0;
 BEGIN
-     DISPLAY e.
+     DISPLAY e;
+     DISPLAY f;
 END.

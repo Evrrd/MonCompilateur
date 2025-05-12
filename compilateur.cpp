@@ -105,9 +105,18 @@ TYPES Flottant(void){
 	cout <<"\tmovl	$"<<*(i+1)<<", 4(%rsp)\t# Conversion of "<<d<<" (32 bit low part)"<<endl;
 	current=(TOKEN) lexer->yylex();
 	return DOUBLE;
-
-
 }
+
+
+enum TYPES CharConst(void){
+	cout<<"\tmovq $0, %rax"<<endl;
+	cout<<"\tmovb $"<<lexer->YYText()<<",%al"<<endl;
+	cout<<"\tpush %rax\t# push a 64-bit version of "<<lexer->YYText()<<endl;
+	current=(TOKEN) lexer->yylex();
+	return CHAR;
+}
+
+
 TYPES Expression(void);			// Called by Term() and calls Term()
 
 TYPES Factor(void){
@@ -123,15 +132,14 @@ TYPES Factor(void){
 	else 
 		if (current==NUMBER)
 			return Number();
-		else if (current==FLOTTANT){
+		else if (current==FLOTTANT)
 			return Flottant();
-		}
 		else if(current==ID)
 			return Identifier();
 		else if(current==CHARCONST)	
-			return 
+			return CharConst();
 			else
-				Error("'(' ou chiffre ou lettre attendue");
+				Error("'(' ou chiffre ou lettre ou charconst attendue");
 
 }
 
@@ -512,8 +520,15 @@ void AssignementStatement(void){
 	if (type != type2){
 		Error("L'identifiant et l'expression non pas le même type");
 	}
-
-	cout << "\tpop "<<variable<<endl;
+	// was missing that part when i looked at the correctin tp7
+	if(type1==CHAR){
+		cout << "\tpop %rax"<<endl;
+		cout << "\tmovb %al,"<<variable<<endl;
+	}
+	else {
+	// ---
+		cout << "\tpop "<<variable<<endl;
+	}
 	
 }
 
@@ -548,7 +563,7 @@ void IfStatement(){
 // "WHILE" Expression "DO" Statement
 
 void WhileStatement(){
-
+	/*
 	current=(TOKEN) lexer->yylex();
 	TYPES type = Expression();
 	if (type != BOOLEAN){
@@ -563,6 +578,22 @@ void WhileStatement(){
 	}
 
 	Statement();
+	*/
+	unsigned long long tag=TagNumber++;
+	cout<<"While"<<tag<<":"<<endl;
+	current=(TOKEN) lexer->yylex();
+	if(Expression()!=BOOLEAN)
+		Error("expression booléene attendue");
+	cout<<"\tpop %rax\t# Get the result of expression"<<endl;
+	cout<<"\tcmpq $0, %rax"<<endl;
+	cout<<"\tje EndWhile"<<tag<<"\t# if FALSE, jump out of the loop"<<tag<<endl;
+	if(current!=KEYWORD||strcmp(lexer->YYText(), "DO")!=0)
+		Error("mot-clé DO attendu");
+	current=(TOKEN) lexer->yylex();
+	Statement();
+	cout<<"\tjmp While"<<tag<<endl;
+	cout<<"EndWhile"<<tag<<":"<<endl;
+
 }
 
 // "FOR" AssignementStatement "To" Expression "DO" Statement
@@ -671,6 +702,19 @@ void DisplayStatement(){
 		cout << "\tcall	printf@PLT"<<endl;
 
 	}
+	// was missing that part when looked tp7 correction 
+	else if (type == BOOLEAN){
+			cout << "\tpop %rdx\t# Zero : False, non-zero : true"<<endl;
+			cout << "\tcmpq $0, %rdx"<<endl;
+			cout << "\tje False"<<tag<<endl;
+			cout << "\tmovq $TrueString, %rdi\t# \"TRUE\\n\""<<endl;
+			cout << "\tjmp Next"<<tag<<endl;
+			cout << "False"<<tag<<":"<<endl;
+			cout << "\tmovq $FalseString, %rdi\t# \"FALSE\\n\""<<endl;
+			cout << "Next"<<tag<<":"<<endl;
+			cout << "\tcall	puts@PLT"<<endl;
+	}
+	// ----
 
 }
 

@@ -37,7 +37,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 {addop}		return ADDOP;
 {mulop}		return MULOP;
 {relop}		return RELOP;
-{flottant}	return FLOTTANT:
+{flottant}	return FLOTTANT;
 {number}	return NUMBER;
 {keyboard}	return KEYBOARD;
 {id}		return ID;

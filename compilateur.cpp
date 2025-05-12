@@ -32,7 +32,7 @@ using namespace std;
 enum OPREL {EQU, DIFF, INF, SUP, INFE, SUPE, WTFR};
 enum OPADD {ADD, SUB, OR, WTFA};
 enum OPMUL {MUL, DIV, MOD, AND ,WTFM};
-enum TYPES {UNSIGNED_INT, BOOLEAN, DOUBLE, CHAR};
+enum TYPES {INTEGER, BOOLEAN, DOUBLE, CHAR};
 
 TOKEN current;				// Current token
 
@@ -78,8 +78,9 @@ void Error(string s){
 
 TYPES Identifier(void){
 	cout << "\tpush "<<lexer->YYText()<<endl;
+	TYPES type = DeclaredVariables[lexer->YYText()];
 	current=(TOKEN) lexer->yylex();
-	return UNSIGNED_INT;
+	return type;
 }
 
 TYPES Number(void){
@@ -87,7 +88,7 @@ TYPES Number(void){
 	cout <<"\tpush $"<<atoi(lexer->YYText())<<endl;
 	current=(TOKEN) lexer->yylex();
 
-	return UNSIGNED_INT;
+	return INTEGER;
 }
 
 TYPES Flottant(void){
@@ -140,14 +141,16 @@ OPMUL MultiplicativeOperator(void){
 // Term := Factor {MultiplicativeOperator Factor}
 TYPES Term(void){
 	OPMUL mulop;
+
 	TYPES type = Factor();
+
 	while(current==MULOP){
 		mulop=MultiplicativeOperator();		// Save operator in local variable
 		TYPES type2 = Factor();
 		if (type != type2){
 			Error("The two factor doesn't have the same type !!");
 		}
-		if (type == UNSIGNED_INT){
+		if (type == INTEGER){
 			cout << "\tpop %rbx"<<endl;	// get first operand
 			cout << "\tpop %rax"<<endl;	// get second operand
 			switch(mulop){
@@ -227,7 +230,7 @@ TYPES SimpleExpression(void){
 		if (type != type2){
 			Error("Type différenet des terms de l'expression");
 		}
-		if (type == UNSIGNED_INT){
+		if (type == INTEGER){
 			cout << "\tpop %rbx"<<endl;	// get first operand
 			cout << "\tpop %rax"<<endl;	// get second operand
 			switch(adop){
@@ -247,24 +250,28 @@ TYPES SimpleExpression(void){
 		}
 
 		if (type == DOUBLE){
-			cout << "\tfstp %rbx  #dep" << endl;
+			cout << "\tfldl (%rsp) #empile first into float pile " << endl;
+			cout << "\taddq $8, %rsp #depilement int pile " << endl;
+			cout << "\tfldl (%rsp) #empile second into float pile " << endl;
 			switch (adop){
 
 				case OR:
-					cout << "\tfadd %rbx %st(0) " << endl;
+					cout<<"\tfaddpl	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 
 				case ADD :
-					cout << "\tfadd %rbx %st(0) " << endl;
+					cout<<"\tfaddpl	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 				
 				case SUB:
-					cout << "\tfsub %rbx %st(0) " << endl;
+					cout<<"\tfsublp	%st(0),%st(1) # st0 + st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl;
 					break;
 				default:
 					Error("opérateur additif inconnu");
 
 			}
+			cout << "\tsubq $8, %rsp    # Empilement d'une valeur non initialisée" << endl;
+			cout << "\tfstpl (%rsp)     # copie %st(0) au sommet de la pile générale et dépile la pile de registres %st(X)" << endl;
 		}
 	}
 	return type;
@@ -283,14 +290,14 @@ void DeclarationPart(void){
 	if(current!=ID)
 		Error("Un identificater était attendu");
 	cout << lexer->YYText() << ":\t.quad 0"<<endl;
-	DeclaredVariables[lexer->YYText()]= UNSIGNED_INT; // OR BOOLEAN
+	DeclaredVariables[lexer->YYText()]= INTEGER; // OR BOOLEAN
 	current=(TOKEN) lexer->yylex();
 	while(current==COMMA){
 		current=(TOKEN) lexer->yylex();
 		if(current!=ID)
 			Error("Un identificateur était attendu");
 		cout << lexer->YYText() << ":\t.quad 0"<<endl;
-		DeclaredVariables.insert({lexer->YYText(), UNSIGNED_INT}); // OR BOOLEAN
+		DeclaredVariables.insert({lexer->YYText(), INTEGER}); // OR BOOLEAN
 		current=(TOKEN) lexer->yylex();
 	}
 	if(current!=LBRACKET)
@@ -337,7 +344,7 @@ void VarDeclaration(void){
 	else if (strcmp(lexer->YYText(), "INTEGER")==0){
 		for (string var : varset){
 			cout << var << ":\t.quad 0"<<endl;
-			DeclaredVariables[var] = UNSIGNED_INT;
+			DeclaredVariables[var] = INTEGER;
 		}
 	}
 
@@ -452,24 +459,27 @@ void Statement();
 // AssignementStatement := Identifier ":=" Expression
 void AssignementStatement(void){
 	string variable;
-	Identifier(); // ?
 	
+	variable = lexer->YYText();
 	if(!IsDeclared(lexer->YYText())){
 		cerr << "Erreur : Variable '"<<lexer->YYText()<<"' non déclarée"<<endl;
 		exit(-1);
 	}
-	variable=lexer->YYText();
+	Identifier(); // ?
+
+	
 	TYPES type = DeclaredVariables[variable];
 
-	current=(TOKEN) lexer->yylex();
 	if(current!=ASSIGN)
 		Error("caractères ':=' attendus");
 	current=(TOKEN) lexer->yylex();
 	TYPES type2 = Expression();
+
+
 	if (type != type2){
 		Error("L'identifiant et l'expression non pas le même type");
 	}
-	cout << "\tpop "<<variable<<endl;
+	
 }
 
 // "IF" Expression "THEN" Statement [ "ELSE" Statement ]
@@ -562,22 +572,35 @@ void BlockStatement(){
 	if (current != KEYBOARD, strcmp(lexer->YYText(), "END")){
 		Error("END Attendu a la fin d'un block commenceant par BEGIN");
 	}
-
-}
+	current=(TOKEN) lexer->yylex();
+}	
 // DisplayStatement := "DISPLAY" Expression
 
 void DisplayStatement(){
 	current = (TOKEN) lexer->yylex();
 	TYPES type = Expression();
-	if (type != UNSIGNED_INT){
-		Error("Must be Integer if you want to display");
+	if (type == INTEGER){
+		cout << "pop %rdx                     # The value to be displayed" << endl;
+		cout << "movq $FormatString1, %rsi    # %llu\n" << endl;
+		cout << "movl    $1, %edi" << endl;
+		cout << "movl    $0, %eax" << endl;
+		cout << "call    __printf_chk@PLT" << endl;
+	}
+	else if (type == DOUBLE){
+		cout << "pop %rdx                     # The value to be displayed" << endl;
+		cout << "movq $FormatString1, %rsi    # %f\n" << endl;
+		cout << "movl    $1, %edi" << endl;
+		cout << "movl    $0, %eax" << endl;
+		cout << "call    __printf_chk@PLT" << endl;
 	}
 
-	cout << "pop %rdx                     # The value to be displayed" << endl;
-    cout << "movq $FormatString1, %rsi    # %llu\n" << endl;
-    cout << "movl    $1, %edi" << endl;
-    cout << "movl    $0, %eax" << endl;
-    cout << "call    __printf_chk@PLT" << endl;
+	else if (type == CHAR){
+		cout << "pop %rdx                     # The value to be displayed" << endl;
+		cout << "movq $FormatString1, %rsi    # %c\n" << endl;
+		cout << "movl    $1, %edi" << endl;
+		cout << "movl    $0, %eax" << endl;
+		cout << "call    __printf_chk@PLT" << endl;
+	}
 
 }
 
@@ -595,7 +618,6 @@ void Statement(void){
 	
 	
 	if (current == ID){
-		
 		AssignementStatement();
 		
 	}
@@ -640,6 +662,10 @@ void Statement(void){
 		DisplayStatement();
 		
 	}
+	else {
+		cout << "Statement Problem" << endl;
+		cout << lexer->YYText() << endl;
+	}
 }
 
 // StatementPart := Statement {";" Statement} "."
@@ -649,9 +675,10 @@ void StatementPart(void){
 	cout << "main:\t\t\t# The main function body :"<<endl;
 	cout << "\tmovq %rsp, %rbp\t# Save the position of the stack's top"<<endl;
 	
+	current=(TOKEN) lexer->yylex();
 	Statement();
 	while(current==SEMICOLON){
-
+		
 		current=(TOKEN) lexer->yylex();
 		Statement();
 	}
@@ -674,6 +701,8 @@ int main(void){	// First version : Source code on standard input and assembly co
 	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
 	cout << "\t.data"<<endl;
 	cout << "\tFormatString1:    .string \"%llu\"    # used by printf to display 64-bit unsigned integers"<< endl;
+	cout << "\tFormatString2:    .string \"%f\"    # used by printf to display 64-bit float"<< endl;
+	cout << "\tFormatString3:    .string \"%c\"    # used by printf to display 64-bit char"<< endl;
 	// Let's proceed to the analysis and code production
 	current=(TOKEN) lexer->yylex();
 	Program();

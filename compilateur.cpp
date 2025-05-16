@@ -439,8 +439,10 @@ OPREL RelationalOperator(void){
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
 TYPES Expression(void){
 	OPREL oprel;
+	unsigned long long tag;
 	TYPES type = SimpleExpression();
 	if(current==RELOP){
+		tag=++TagNumber;
 		oprel=RelationalOperator();
 		TYPES type2 = SimpleExpression();
 		if (type != type2){
@@ -506,7 +508,7 @@ void AssignementStatement(void){
 		cerr << "Erreur : Variable '"<<lexer->YYText()<<"' non déclarée"<<endl;
 		exit(-1);
 	}
-	Identifier(); // ?
+	Identifier(); // ? ?
 
 	
 	TYPES type = DeclaredVariables[variable];
@@ -521,7 +523,7 @@ void AssignementStatement(void){
 		Error("L'identifiant et l'expression non pas le même type");
 	}
 	// was missing that part when i looked at the correctin tp7
-	if(type1==CHAR){
+	if(type==CHAR){
 		cout << "\tpop %rax"<<endl;
 		cout << "\tmovb %al,"<<variable<<endl;
 	}
@@ -534,6 +536,7 @@ void AssignementStatement(void){
 
 // "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 void IfStatement(){
+	/*
 	// doesnt work like a if else
 	// will do the if and if there is a else will do it 
 
@@ -557,6 +560,31 @@ void IfStatement(){
 	if (current==KEYBOARD && strcmp(lexer->YYText(), "ELSE") == 0)
 		current=(TOKEN) lexer->yylex();
 		Statement();
+	*/
+	unsigned long long tag=TagNumber++;
+	current=(TOKEN) lexer->yylex();
+
+	if(Expression()!=BOOLEAN)
+		Error("le type de l'expression doit être BOOLEAN");
+
+	cout<<"\tpop %rax\t# Get the result of expression"<<endl;
+	cout<<"\tcmpq $0, %rax"<<endl;
+	cout<<"\tje Else"<<tag<<"\t# if FALSE, jump to Else"<<tag<<endl;
+	if(current!=KEYBOARD||strcmp(lexer->YYText(),"THEN")!=0)
+		Error("mot-clé 'THEN' attendu");
+	current=(TOKEN) lexer->yylex();
+	Statement();
+
+	cout<<"\tjmp Next"<<tag<<"\t# Do not execute the else statement"<<endl;
+	cout<<"Else"<<tag<<":"<<endl; // Might be the same effective adress than Next:
+
+	if(current==KEYBOARD&&strcmp(lexer->YYText(),"ELSE")==0){
+		current=(TOKEN) lexer->yylex();
+		Statement();
+	}
+
+	cout<<"Next"<<tag<<":"<<endl;
+
 }
 
 
@@ -587,7 +615,7 @@ void WhileStatement(){
 	cout<<"\tpop %rax\t# Get the result of expression"<<endl;
 	cout<<"\tcmpq $0, %rax"<<endl;
 	cout<<"\tje EndWhile"<<tag<<"\t# if FALSE, jump out of the loop"<<tag<<endl;
-	if(current!=KEYWORD||strcmp(lexer->YYText(), "DO")!=0)
+	if(current!=KEYBOARD||strcmp(lexer->YYText(), "DO")!=0)
 		Error("mot-clé DO attendu");
 	current=(TOKEN) lexer->yylex();
 	Statement();
@@ -635,7 +663,7 @@ void BlockStatement(){
 	
 	current=(TOKEN) lexer->yylex();
 
-	if (current != KEYBOARD, strcmp(lexer->YYText(), "END")){
+	if (current != KEYBOARD || strcmp(lexer->YYText(), "END")){
 		Error("END Attendu a la fin d'un block commenceant par BEGIN");
 	}
 	current=(TOKEN) lexer->yylex();
@@ -643,6 +671,7 @@ void BlockStatement(){
 // DisplayStatement := "DISPLAY" Expression
 
 void DisplayStatement(){
+	unsigned long long tag=++TagNumber;
 	current = (TOKEN) lexer->yylex();
 	TYPES type = Expression();
 	if (type == INTEGER){
@@ -784,6 +813,7 @@ void Statement(void){
 
 // StatementPart := Statement {";" Statement} "."
 void StatementPart(void){
+	cout << "\t.align 8"<<endl;	// Alignement on addresses that are a multiple of 8 (64 bits = 8 bytes)
 	cout << "\t.text\t\t# The following lines contain the program"<<endl;
 	cout << "\t.globl main\t# The main function must be visible from outside"<<endl;
 	cout << "main:\t\t\t# The main function body :"<<endl;
@@ -806,8 +836,8 @@ void StatementPart(void){
 void Program(void){
 	if (current==KEYBOARD && strcmp(lexer->YYText(), "VAR") == 0){
 		VarDeclarationPart();
-		StatementPart();
 	}
+	StatementPart();
 }
 
 int main(void){	// First version : Source code on standard input and assembly code on standard output
@@ -817,6 +847,9 @@ int main(void){	// First version : Source code on standard input and assembly co
 	cout << "\tFormatString1:    .string \"%llu\"    # used by printf to display 64-bit unsigned integers"<< endl;
 	cout << "\tFormatString2:    .string \"%lf\"    # used by printf to display 64-bit float"<< endl;
 	cout << "\tFormatString3:    .string \"%c\"    # used by printf to display 64-bit char"<< endl;
+	cout << "TrueString:\t.string \"TRUE\"\t# used by printf to display the boolean value TRUE"<<endl; 
+	cout << "FalseString:\t.string \"FALSE\"\t# used by printf to display the boolean value FALSE"<<endl; 
+
 	// Let's proceed to the analysis and code production
 	current=(TOKEN) lexer->yylex();
 	Program();

@@ -662,41 +662,41 @@ void ForStatement(){
 	}
 	TYPES type = AssignementStatement();
 
-	if (current != KEYBOARD || strcmp(lexer->YYText(), "To"!=0)){
+	if (current != KEYBOARD || strcmp(lexer->YYText(), "To")!=0){
 		Error("mot clé To attendu après un for");
 	}
-	switch(strcmp(lexer->YYText())){
-		case "DOWN":
-			// should look if to is there after too
+	string c = lexer->YYText();
 
+	if (c == "DOWN"){
+		// should look if to is there after too
+	}
 
-		case "TO":
-			TYPES type2 = Expression();
-			if (type != type2){
-				Error("La variable et l'expression doivent avoir le même type dans un for !");
-			}
-			cout << "\tpop %rbx \t #get the result of expression"<<endl;
-			cout << "\tpop %rax \t #and the variable"<<endl;
+	else if (c == "To"){
+		TYPES type2 = Expression();
+		if (type != type2){
+			Error("La variable et l'expression doivent avoir le même type dans un for !");
+		}
+		cout << "\tpop %rbx \t #get the result of expression"<<endl;
+		cout << "\tpop %rax \t #and the variable"<<endl;
 
-			cout << "Loop" << tag << ":" << endl;
+		cout << "Loop" << tag << ":" << endl;
 
-			cout << "\tcmpq %rbx, %rax"<<endl;
-			cout << "\tje EndLoop" << tag << " " <<endl;
+		cout << "\tcmpq %rbx, %rax"<<endl;
+		cout << "\tje EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
 
-			if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
-				Error("mot-clé DO attendu");
-			}
-			current = (TOKEN) lexer->yylex();
-			Statement();
+		if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
+			Error("mot-clé DO attendu");
+		}
+		current = (TOKEN) lexer->yylex();
+		Statement();
 
-			// +1 at variable 
+		// +1 at variable 
 
-			cout << "\taddq 1, $rax \t #adding one to rax";
-			cout << "\tjmp Loop"<< tag << endl;
-
-
-		default:
-			Error("mot clé expected ngl");
+		cout << "\taddq 1, $rax \t #adding one to rax";
+		cout << "\tjmp Loop"<< tag << endl;
+	}
+	else {
+		Error("mot clé down or to expected ngl");
 	}
 
 	cout << "EndLoop" << tag << ":" << endl;

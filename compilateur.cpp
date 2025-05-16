@@ -500,7 +500,7 @@ TYPES Expression(void){
 void Statement();
 
 // AssignementStatement := Identifier ":=" Expression
-void AssignementStatement(void){
+TYPES AssignementStatement(void){
 	string variable;
 	
 	variable = lexer->YYText();
@@ -531,6 +531,7 @@ void AssignementStatement(void){
 	// ---
 		cout << "\tpop "<<variable<<endl;
 	}
+	return type;
 	
 }
 
@@ -610,24 +611,30 @@ void WhileStatement(){
 	unsigned long long tag=TagNumber++;
 	cout<<"While"<<tag<<":"<<endl;
 	current=(TOKEN) lexer->yylex();
+
 	if(Expression()!=BOOLEAN)
 		Error("expression booléene attendue");
+
 	cout<<"\tpop %rax\t# Get the result of expression"<<endl;
 	cout<<"\tcmpq $0, %rax"<<endl;
 	cout<<"\tje EndWhile"<<tag<<"\t# if FALSE, jump out of the loop"<<tag<<endl;
+
 	if(current!=KEYBOARD||strcmp(lexer->YYText(), "DO")!=0)
 		Error("mot-clé DO attendu");
+
 	current=(TOKEN) lexer->yylex();
 	Statement();
+
 	cout<<"\tjmp While"<<tag<<endl;
 	cout<<"EndWhile"<<tag<<":"<<endl;
 
 }
 
 // "FOR" AssignementStatement "To" Expression "DO" Statement
-
+// ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
 void ForStatement(){
 
+	/*
 	current=(TOKEN) lexer->yylex();
 	
 	AssignementStatement();
@@ -646,6 +653,54 @@ void ForStatement(){
 
 	Statement();
 
+	*/
+	unsigned long long tag=TagNumber;
+	current=(TOKEN) lexer->yylex();
+	
+	if (current != ID){
+		Error("ID attendu");
+	}
+	TYPES type = AssignementStatement();
+
+	if (current != KEYBOARD || strcmp(lexer->YYText(), "To"!=0)){
+		Error("mot clé To attendu après un for");
+	}
+	switch(strcmp(lexer->YYText())){
+		case "DOWN":
+			// should look if to is there after too
+
+
+		case "TO":
+			TYPES type2 = Expression();
+			if (type != type2){
+				Error("La variable et l'expression doivent avoir le même type dans un for !");
+			}
+			cout << "\tpop %rbx \t #get the result of expression"<<endl;
+			cout << "\tpop %rax \t #and the variable"<<endl;
+
+			cout << "Loop" << tag << ":" << endl;
+
+			cout << "\tcmpq %rbx, %rax"<<endl;
+			cout << "\tje EndLoop" << tag << " " <<endl;
+
+			if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
+				Error("mot-clé DO attendu");
+			}
+			current = (TOKEN) lexer->yylex();
+			Statement();
+
+			// +1 at variable 
+
+			cout << "\taddq 1, $rax \t #adding one to rax";
+			cout << "\tjmp Loop"<< tag << endl;
+
+
+		default:
+			Error("mot clé expected ngl");
+	}
+
+	cout << "EndLoop" << tag << ":" << endl;
+	
 
 }
 

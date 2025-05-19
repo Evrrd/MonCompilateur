@@ -530,6 +530,8 @@ TYPES AssignementStatement(void){
 	else {
 	// ---
 		cout << "\tpop "<<variable<<endl;
+		cout << "\taddq $8, %rsp\t\t\t# pop nothing"<<endl;
+		
 	}
 	return type;
 	
@@ -660,29 +662,36 @@ void ForStatement(){
 	if (current != ID){
 		Error("ID attendu");
 	}
+	string variable = lexer->YYText();
+
 	TYPES type = AssignementStatement();
 
-	if (current != KEYBOARD || strcmp(lexer->YYText(), "To")!=0){
-		Error("mot clé To attendu après un for");
-	}
+	
+
 	string c = lexer->YYText();
 
-	if (c == "DOWN"){
-		// should look if to is there after too
-	}
-
-	else if (c == "To"){
+	if (c == "To"){
+		
+		current=(TOKEN) lexer->yylex();
+		string nbExpression= lexer->YYText();
+		
 		TYPES type2 = Expression();
 		if (type != type2){
 			Error("La variable et l'expression doivent avoir le même type dans un for !");
 		}
-		cout << "\tpop %rbx \t #get the result of expression"<<endl;
-		cout << "\tpop %rax \t #and the variable"<<endl;
-
+	
+		
 		cout << "Loop" << tag << ":" << endl;
+		cout << "\tpop %rax \t #get the result of expression"<<endl;
+		
+		//cout << "\tmovq $" << variable << ", %rax \t #putting " << variable << " in rax for ddd so i can look whats in f " << endl;
+		//cout << "\tcmpq $" << nbExpression << ", f"<<endl;
+		cout << "\tcmpq %rax, f"<<endl;
+		
+		cout << "\tpush %rax" << endl;
 
-		cout << "\tcmpq %rbx, %rax"<<endl;
-		cout << "\tje EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
+		cout << "\tjae EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
+		
 
 		if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
 			Error("mot-clé DO attendu");
@@ -692,8 +701,45 @@ void ForStatement(){
 
 		// +1 at variable 
 
-		cout << "\taddq 1, $rax \t #adding one to rax";
+		cout << "\taddq $1, f \t #adding one to f" << endl;
+		
+
+
 		cout << "\tjmp Loop"<< tag << endl;
+		
+		
+		/*
+		current=(TOKEN) lexer->yylex();
+		TYPES type2 = Expression();
+		if (type != type2){
+			Error("La variable et l'expression doivent avoir le même type dans un for !");
+		}
+	
+
+		cout << "Loop" << tag << ":" << endl;
+		cout << "\tpop (%rbx) \t #get the result of expression"<<endl;
+		
+		cout << "\tmovq $" << variable << ", %rax \t #putting " << variable << " in rax for cmp" << endl;
+		cout << "\tcmpq %rbx, %rax"<<endl;
+		
+
+		cout << "\tje EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
+		cout << "\tpush (%rbx)" << endl;
+
+		if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
+			Error("mot-clé DO attendu");
+		}
+		current = (TOKEN) lexer->yylex();
+		Statement();
+
+		// +1 at variable 
+
+		cout << "\taddq $1, f \t #adding one to rax" << endl;
+		
+
+
+		cout << "\tjmp Loop"<< tag << endl;
+		*/
 	}
 	else {
 		Error("mot clé down or to expected ngl");
@@ -704,6 +750,7 @@ void ForStatement(){
 
 }
 
+
 // "BEGIN" Statement { ";" Statement } "END"
 
 void BlockStatement(){
@@ -711,8 +758,13 @@ void BlockStatement(){
 	current = (TOKEN) lexer->yylex();
 	Statement();
 
+	
+
 	while (strcmp(lexer->YYText(), ";") == 0){
+		current=(TOKEN) lexer->yylex(); // pass the ; 
+		
 		Statement();
+		
 	}
 
 	
@@ -730,11 +782,11 @@ void DisplayStatement(){
 	current = (TOKEN) lexer->yylex();
 	TYPES type = Expression();
 	if (type == INTEGER){
-		cout << "\tpop %rdx                     # The value to be displayed" << endl;
-		cout << "\tmovq $FormatString1, %rsi    # %llu\n" << endl;
-		cout << "\tmovl    $1, %edi" << endl;
-		cout << "\tmovl    $0, %eax" << endl;
-		cout << "\tcall    __printf_chk@PLT" << endl;
+		cout << "\tpop %rsi\t# The value to be displayed"<<endl;
+		cout << "\tmovq $FormatString1, %rdi\t# \"%llu\\n\""<<endl;
+		cout << "\tmovl	$0, %eax"<<endl;
+		cout << "\tcall	printf@PLT"<<endl;
+
 	}
 	else if (type == DOUBLE){
 		/*
@@ -767,7 +819,7 @@ void DisplayStatement(){
 		cout << "\tcall	printf"<<endl;
 		cout << "nop"<<endl;
 		cout << "\taddq $24, %rsp\t\t\t# pop nothing"<<endl;
-		
+		 
 
 	}
 

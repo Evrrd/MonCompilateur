@@ -896,7 +896,7 @@ return ID;
 case 8:
 YY_RULE_SETUP
 #line 46 "tokeniser.l"
-return CHARCONST
+return CHARCONST;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP

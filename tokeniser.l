@@ -43,7 +43,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 {number}	return NUMBER;
 {keyboard}	return KEYBOARD;
 {id}		return ID;
-{charconst}		return CHARCONST
+{charconst}		return CHARCONST;
 {stringconst}	return STRINGCONST;
 "["		return RBRACKET;
 "]"		return LBRACKET;

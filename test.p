@@ -1,11 +1,7 @@
 VAR 
-     a,b   : INTEGER ; 
-     f,e : DOUBLE.
+     a,b,f   : INTEGER.
+     
 a := 3;
-b := a + 2;
-f := 2.5;
-e := f * 2.0;
-BEGIN
-     DISPLAY e;
-     DISPLAY f;
-END.
+b := 0;
+
+FOR f := 2 To 5 + 5 DO DISPLAY f.

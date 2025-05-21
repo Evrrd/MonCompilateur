@@ -4,4 +4,4 @@ VAR
 a := 3;
 b := 0;
 
-FOR f := 2 To 5 + 5 DO DISPLAY f.
+FOR f := 10 DOWNTO 2 DO DISPLAY f.

@@ -22,26 +22,21 @@ main:			# The main function body :
 	pop b
 	addq $8, %rsp			# pop nothing
 	push f
-	push $2
+	push $10
 	pop f
 	addq $8, %rsp			# pop nothing
-	push $5
-	push $5
-	pop %rbx
-	pop %rax
-	addq	%rbx, %rax	# ADD
-	push %rax
+	push $2
 Loop0:
 	pop %rax 	 #get the result of expression
 	cmpq %rax, f
 	push %rax
-	jae EndLoop0 #jump if equal we out of the loop
+	jbe EndLoop0 #jump if equal we out of the loop
 	push f
 	pop %rsi	# The value to be displayed
 	movq $FormatString1, %rdi	# "%llu\n"
 	movl	$0, %eax
 	call	printf@PLT
-	addq $1, f 	 #adding one to f
+	subq $1, f 	 # sub one to f
 	jmp Loop0
 EndLoop0:
 	movq %rbp, %rsp		# Restore the position of the stack's top

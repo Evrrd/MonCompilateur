@@ -20,14 +20,14 @@ using namespace std;
 %option c++
 %option yylineno
 
-charconst (\'.?\')
+charconst \'\\?.\'
 stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]
 digit   [0-9]
 flottant {digit}+[\.]{digit}+
 number  {digit}+
-keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY|VAR)
+keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY|VAR|DOWNTO|CASE|OF)
 id	{alpha}({alpha}|{digit})*
 addop	(\+|\-|\|\|)
 mulop	(\*|\/|%|\&\&)

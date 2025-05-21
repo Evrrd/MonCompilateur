@@ -212,12 +212,10 @@ TYPES Term(void){
 					break;
 				case DIV:
 					cout << "\tfdivp %st(0),%st(1) # st0 / st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl; // quotient goes to %rax
-					cout << "\tflds %rax # empile quotient" << endl;
 					break;
 
 				case MOD:
 					cout << "\tfdivp %st(0),%st(1) # st0 % st1 , stockage dans st1 et depilement de st1 pcq p a la fin" << endl; // rest is in rdx
-					cout << "\tflds %rdx # empile reste" << endl;
 					break;
 
 				default:
@@ -741,6 +739,37 @@ void ForStatement(){
 		cout << "\tjmp Loop"<< tag << endl;
 		*/
 	}
+
+	else if (c == "DOWNTO"){
+
+		current=(TOKEN)lexer->yylex();
+
+		TYPES type2 = Expression();
+		if (type != type2){
+			Error("La variable et l'expression doivent avoir le même type dans un for !");
+		}
+
+		cout << "Loop" << tag << ":" << endl;
+		cout << "\tpop %rax \t #get the result of expression"<<endl;
+
+		cout << "\tcmpq %rax, f"<<endl;
+		
+		cout << "\tpush %rax" << endl;
+
+		cout << "\tjbe EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
+
+		if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
+			Error("mot-clé DO attendu");
+		}
+		current = (TOKEN) lexer->yylex();
+		Statement();
+
+
+		// -1 at variable 
+
+		cout << "\tsubq $1, f \t # sub one to f" << endl;
+		cout << "\tjmp Loop"<< tag << endl;
+	}
 	else {
 		Error("mot clé down or to expected ngl");
 	}
@@ -768,7 +797,7 @@ void BlockStatement(){
 	}
 
 	
-	current=(TOKEN) lexer->yylex();
+	
 
 	if (current != KEYBOARD || strcmp(lexer->YYText(), "END")){
 		Error("END Attendu a la fin d'un block commenceant par BEGIN");
@@ -854,7 +883,32 @@ void DisplayStatement(){
 
 }
 
+// CaseStatement := "CASE" Expression "OF" CaseListElement {";" CaseListElement} "END"
+// CaseListElement := CaseLabel {"," CaseLabel} ":" [Statement | empty ]
+// CaseLabel := Constant 
+void CaseStatement(void){
 
+	current = (TOKEN) lexer->yylex();
+	unsigned long long tag=TagNumber++;
+
+	TYPES type = Expression();
+
+	cout << "\tpop %rax \t #get the result of expression"<<endl;
+
+
+	if (current != KEYBOARD || strcmp(lexer->YYText(), "OF")!=0){
+		Error("mot clée OF attendu");
+	}
+
+
+	CaseListElement(); 
+
+
+}
+
+void RepeatStatement(void){
+	// todo 
+}
 // Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement
 void Statement(void){
 
@@ -903,6 +957,10 @@ void Statement(void){
 	
 		BlockStatement();
 		
+	}
+
+	else if (strcmp(lexer->YYText(), "CASE") == 0){
+		CaseStatement();
 	}
 
 	// else Display

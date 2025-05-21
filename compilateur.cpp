@@ -686,10 +686,10 @@ void ForStatement(){
 		//cout << "\tcmpq $" << nbExpression << ", f"<<endl;
 		cout << "\tcmpq %rax, f"<<endl;
 		
-		cout << "\tpush %rax" << endl;
+		
 
 		cout << "\tjae EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
-		
+		cout << "\tpush %rax" << endl;
 
 		if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
 			Error("mot-clé DO attendu");

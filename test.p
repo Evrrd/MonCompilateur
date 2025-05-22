@@ -1,7 +1,11 @@
 VAR 
-     a,b,f   : INTEGER.
+     a,b,c   : INTEGER.
      
-a := 3;
-b := 0;
+a := 1;
+b := 4;
+c := 8;
 
-FOR f := 10 DOWNTO 2 DO DISPLAY f.
+CASE 8 OF
+     a : DISPLAY 100;
+     c : DISPLAY 200
+END.

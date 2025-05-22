@@ -685,9 +685,6 @@ void ForStatement(){
 		//cout << "\tmovq $" << variable << ", %rax \t #putting " << variable << " in rax for ddd so i can look whats in f " << endl;
 		//cout << "\tcmpq $" << nbExpression << ", f"<<endl;
 		cout << "\tcmpq %rax, f"<<endl;
-		
-		
-
 		cout << "\tjae EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
 		cout << "\tpush %rax" << endl;
 
@@ -884,25 +881,101 @@ void DisplayStatement(){
 }
 
 // CaseStatement := "CASE" Expression "OF" CaseListElement {";" CaseListElement} "END"
-// CaseListElement := CaseLabel {"," CaseLabel} ":" [Statement | empty ]
+// CaseListElement := CaseLabel //{"," CaseLabel}// ":" [Statement | empty ]
 // CaseLabel := Constant 
 void CaseStatement(void){
 
+	
+
+	// --------
+
 	current = (TOKEN) lexer->yylex();
 	unsigned long long tag=TagNumber++;
+
+	set<string> varset; // if plusieurs var
 
 	TYPES type = Expression();
 
 	cout << "\tpop %rax \t #get the result of expression"<<endl;
 
 
-	if (current != KEYBOARD || strcmp(lexer->YYText(), "OF")!=0){
+	if (current != KEYBOARD || strcmp(lexer->YYText(), "OF")!=0){
 		Error("mot clée OF attendu");
 	}
 
+	
 
-	CaseListElement(); 
+	current = (TOKEN) lexer->yylex();
+	string variable = lexer->YYText();
+	varset.insert(variable);
+	TYPES type2 = Expression();
 
+	if (type != type2){
+		Error("Must be same type");
+	}
+
+	
+
+	// now near :
+
+	if (current != COLON){
+		Error("Must be : in case");
+	}
+	
+	current = (TOKEN) lexer->yylex();
+
+	
+
+	cout << "Case" << tag << ":" << endl;
+
+	cout << "\tpop %rbx" << endl;
+	cout << "\tcmp %rax, %rbx" << endl;
+	int i = tag++;
+	cout << "\tjne Case" << i + 1<< endl;
+	Statement();
+
+
+
+	while (current == SEMICOLON){
+		
+		
+		current = (TOKEN) lexer->yylex();
+		string variable = lexer->YYText();
+		varset.insert(variable);
+		i = tag++;
+		cout << "Case" << i << ":" << endl;
+		TYPES type2 = Expression();
+
+		if (type != type2){
+			Error("Must be same type");
+		}
+		if (current != COLON){
+			Error("':' needed in case when doing the thing");
+		}
+		current = (TOKEN) lexer->yylex();
+		
+		
+		cout << "\tpop %rbx" << endl;
+		cout << "\tcmp %rax, %rbx" << endl;
+		
+		cout << "\tjne Case" << i + 1<< endl;
+		Statement();
+
+	}
+	i = tag++;
+	cout << "Case" << i << ":" << endl;
+	cout << "\tjmp EndCase" << tag << endl;
+	
+
+	cout << "EndCase" << tag << ":" << endl;
+
+	
+
+	if (current != KEYBOARD || (strcmp(lexer->YYText(), "END") != 0)){
+		Error("END attendu à la fin d'un case");
+	}
+
+	current = (TOKEN) lexer->yylex();
 
 }
 

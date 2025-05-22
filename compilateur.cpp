@@ -979,8 +979,9 @@ void CaseStatement(void){
 
 }
 
+// <repeat statement> ::= repeat <statement> {; <statement>} until <expression>
 void RepeatStatement(void){
-	// todo 
+	current = (TOKEN) lexer->yylex();
 }
 // Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement
 void Statement(void){
@@ -1032,8 +1033,17 @@ void Statement(void){
 		
 	}
 
+	// else if CASE
+
 	else if (strcmp(lexer->YYText(), "CASE") == 0){
 		CaseStatement();
+	}
+
+	// else if REPEAT
+
+
+	else if (strcmp(lexer->YYText(), "REPEAT") == 0){
+		RepeatStatement();
 	}
 
 	// else Display
@@ -1044,7 +1054,7 @@ void Statement(void){
 		
 	}
 	else {
-		cout << "Statement Problem" << endl;
+		Error("Statement Problem");
 		cout << lexer->YYText() << endl;
 	}
 }

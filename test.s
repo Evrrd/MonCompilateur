@@ -8,7 +8,6 @@ FalseString:	.string "FALSE"	# used by printf to display the boolean value FALSE
 a:	.quad 0
 b:	.quad 0
 c:	.quad 0
-d:	.quad 0
 	.align 8
 	.text		# The following lines contain the program
 	.globl main	# The main function must be visible from outside
@@ -26,33 +25,32 @@ main:			# The main function body :
 	push $8
 	pop c
 	addq $8, %rsp			# pop nothing
-Repeat0:
+	push $8
+	pop %rax 	 #get the result of expression
 	push a
-	push a
-	push $1
+Case0:
 	pop %rbx
-	pop %rax
-	addq	%rbx, %rax	# ADD
-	push %rax
-	pop a
-	addq $8, %rsp			# pop nothing
-	push a
+	cmp %rax, %rbx
+	jne Case1
+	push $100
 	pop %rsi	# The value to be displayed
 	movq $FormatString1, %rdi	# "%llu\n"
 	movl	$0, %eax
 	call	printf@PLT
-	push a
-	push $8
-	pop %rax
+	jmp EndCase0
+Case1:
+	push c
 	pop %rbx
-	cmpq %rax, %rbx
-	ja Vrai4	# If above
-	push $0		# False
-	jmp Suite4
-Vrai4:	push $0xFFFFFFFFFFFFFFFF		# True
-Suite4:
-	pop %rax 	 #get the result of expression
-	cmp $0, %rax 	#cmp if 0 (false)
-	je Repeat0
+	cmp %rax, %rbx
+	jne Case2
+	push $200
+	pop %rsi	# The value to be displayed
+	movq $FormatString1, %rdi	# "%llu\n"
+	movl	$0, %eax
+	call	printf@PLT
+	jmp EndCase0
+Case2:
+	jmp EndCase0
+EndCase0:
 	movq %rbp, %rsp		# Restore the position of the stack's top
 	ret			# Return from main function

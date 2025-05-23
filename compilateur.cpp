@@ -908,13 +908,12 @@ void CaseStatement(void){
 	current = (TOKEN) lexer->yylex();
 	string variable = lexer->YYText();
 	varset.insert(variable);
-	TYPES type2 = Expression();
+	TYPES type2 = Factor();
 
 	if (type != type2){
 		Error("Must be same type");
 	}
 
-	
 
 	// now near :
 
@@ -931,9 +930,10 @@ void CaseStatement(void){
 	cout << "\tpop %rbx" << endl;
 	cout << "\tcmp %rax, %rbx" << endl;
 	int i = tag++;
+	int i2 = i;
 	cout << "\tjne Case" << i + 1<< endl;
 	Statement();
-
+	cout << "\tjmp EndCase" << i2 << endl;
 
 
 	while (current == SEMICOLON){
@@ -943,8 +943,12 @@ void CaseStatement(void){
 		string variable = lexer->YYText();
 		varset.insert(variable);
 		i = tag++;
+		
+
+
+
 		cout << "Case" << i << ":" << endl;
-		TYPES type2 = Expression();
+		TYPES type2 = Factor();
 
 		if (type != type2){
 			Error("Must be same type");
@@ -960,14 +964,15 @@ void CaseStatement(void){
 		
 		cout << "\tjne Case" << i + 1<< endl;
 		Statement();
+		cout << "\tjmp EndCase" << i2 << endl;
 
 	}
 	i = tag++;
 	cout << "Case" << i << ":" << endl;
-	cout << "\tjmp EndCase" << tag << endl;
+	cout << "\tjmp EndCase" << i2 << endl;
 	
 
-	cout << "EndCase" << tag << ":" << endl;
+	cout << "EndCase" << i2 << ":" << endl;
 
 	
 

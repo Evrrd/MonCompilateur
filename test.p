@@ -5,7 +5,7 @@ a := 1;
 b := 4;
 c := 8;
 
-BEGIN
-
-     d := a < b
-END.
+REPEAT
+     a := a + 1;
+     DISPLAY a
+UNTIL a > 8.

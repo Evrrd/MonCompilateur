@@ -26,18 +26,33 @@ main:			# The main function body :
 	push $8
 	pop c
 	addq $8, %rsp			# pop nothing
-	push d
+Repeat0:
 	push a
-	push b
+	push a
+	push $1
+	pop %rbx
+	pop %rax
+	addq	%rbx, %rax	# ADD
+	push %rax
+	pop a
+	addq $8, %rsp			# pop nothing
+	push a
+	pop %rsi	# The value to be displayed
+	movq $FormatString1, %rdi	# "%llu\n"
+	movl	$0, %eax
+	call	printf@PLT
+	push a
+	push $8
 	pop %rax
 	pop %rbx
 	cmpq %rax, %rbx
-	jb Vrai2	# If below
+	ja Vrai4	# If above
 	push $0		# False
-	jmp Suite2
-Vrai2:	push $0xFFFFFFFFFFFFFFFF		# True
-Suite2:
-	pop d
-	addq $8, %rsp			# pop nothing
+	jmp Suite4
+Vrai4:	push $0xFFFFFFFFFFFFFFFF		# True
+Suite4:
+	pop %rax 	 #get the result of expression
+	cmp $0, %rax 	#cmp if 0 (false)
+	je Repeat0
 	movq %rbp, %rsp		# Restore the position of the stack's top
 	ret			# Return from main function

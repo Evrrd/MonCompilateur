@@ -27,7 +27,7 @@ alpha   [A-Za-z]
 digit   [0-9]
 flottant {digit}+[\.]{digit}+
 number  {digit}+
-keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY|VAR|DOWNTO|CASE|OF)
+keyboard (FOR|WHILE|IF|THEN|ELSE|DO|To|BEGIN|END|DISPLAY|VAR|DOWNTO|CASE|OF|REPEAT|UNTIL)
 id	{alpha}({alpha}|{digit})*
 addop	(\+|\-|\|\|)
 mulop	(\*|\/|%|\&\&)

@@ -982,6 +982,25 @@ void CaseStatement(void){
 // <repeat statement> ::= repeat <statement> {; <statement>} until <expression>
 void RepeatStatement(void){
 	current = (TOKEN) lexer->yylex();
+	unsigned long long tag = TagNumber++;
+	cout << "Repeat" << tag << ":" << endl;
+	Statement();
+	
+	while (current == SEMICOLON){
+		current = (TOKEN) lexer->yylex();
+		Statement();
+	}
+	if (current != KEYBOARD || strcmp(lexer->YYText(), "UNTIL") != 0){
+		Error("Mot clé UNTIL attendu dans un REPEAT");
+	}
+	current = (TOKEN) lexer->yylex();
+	Expression();
+	// now if the expression if false 
+	// jmp Repeattag
+
+	cout << "\tpop %rax \t #get the result of expression"<<endl;
+	cout << "\tcmp $0, %rax \t#cmp if 0 (false)" << endl;
+	cout << "\tje Repeat" << tag << endl;
 }
 // Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement
 void Statement(void){

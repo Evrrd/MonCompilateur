@@ -1079,7 +1079,7 @@ void Statement(void){
 	}
 	else {
 		Error("Statement Problem");
-		cout << lexer->YYText() << endl;
+		//cout << lexer->YYText() << endl;
 	}
 }
 

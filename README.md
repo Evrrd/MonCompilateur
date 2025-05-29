@@ -4,39 +4,23 @@ A simple compiler.
 From : Pascal-like imperative LL(k) langage
 To : 64 bit 80x86 assembly langage (AT&T)
 
-**Download the repository :**
 
-> git clone git@framagit.org:jourlin/cericompiler.git
+# Liste des codes réalisés :
 
-**Build the compiler with debug symbols :**
+> Je suis pas sûr à 100% donc si y'a un code identique au votre
+> qui se trouve dans ma liste, c'est que j'ai oublié.
 
-> g++ -ggdb compilateur.cpp -o compilateur
 
-**Compile the test program :**
+- Factor();
+- Term();
+- SimpleExpression();
+- VarDeclaration();
+- AssignementStatement();
+- ForStatement();
+- BlockStatement();
+- DisplayStatement(); (j'ai essayé de le faire tout seul mais j'ai eu beaucoup de soucis avec la partie double)
+- CaseStatement(); (J'ai pas réussi à faire en sorte qu'on puisse mettre plusieurs CaseLabel, mais sinon ça fonctionne)
+- RepeatStatement();
+- Statement();
 
-> cat test.p | ./compilateur > test.s
-
-**Have a look at the output :**
-
-> gedit test.s
-
-**Produce the executable (with debug info) :**
-
-> gcc -ggdb test.s -o test :
-
-**Debug the executable :**
-
-> ddd ./test
-
-**Commit the new version :**
-
-> git commit -a -m "What's new..."
-
-**Send to your framagit :**
-
-> git push -u origin master
-
-**Get from your framagit :**
-
-> git pull -u origin master
-
+> Sinon dans tokeniser.l j'ai très peu copié à part si ça marchait vraiment pas, par exemple mon charconst ne marchait pas. 

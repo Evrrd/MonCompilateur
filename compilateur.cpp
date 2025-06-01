@@ -303,33 +303,6 @@ TYPES SimpleExpression(void){
 
 }
 
-/*
-// DeclarationPart := "[" Ident {"," Ident} "]"
-void DeclarationPart(void){
-	if(current!=RBRACKET)
-		Error("caractère '[' attendu");
-	
-	cout << "\t.align 8"<<endl;
-	
-	current=(TOKEN) lexer->yylex();
-	if(current!=ID)
-		Error("Un identificater était attendu");
-	cout << lexer->YYText() << ":\t.quad 0"<<endl;
-	DeclaredVariables[lexer->YYText()]= INTEGER; // OR BOOLEAN
-	current=(TOKEN) lexer->yylex();
-	while(current==COMMA){
-		current=(TOKEN) lexer->yylex();
-		if(current!=ID)
-			Error("Un identificateur était attendu");
-		cout << lexer->YYText() << ":\t.quad 0"<<endl;
-		DeclaredVariables.insert({lexer->YYText(), INTEGER}); // OR BOOLEAN
-		current=(TOKEN) lexer->yylex();
-	}
-	if(current!=LBRACKET)
-		Error("caractère ']' attendu");
-	current=(TOKEN) lexer->yylex();
-}
-*/
 
 //  VarDeclaration := Ident {"," Ident} ":" Type
 void VarDeclaration(void){
@@ -537,31 +510,7 @@ TYPES AssignementStatement(void){
 
 // "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 void IfStatement(){
-	/*
-	// doesnt work like a if else
-	// will do the if and if there is a else will do it 
-
 	
-	current=(TOKEN) lexer->yylex();
-	TYPES type = Expression();
-	if (type != BOOLEAN){
-		Error("Expression type in IfStatement must be Boolean");
-	}
-
-	// current=(TOKEN) lexer->yylex();
-
-	if (current!=KEYBOARD || strcmp(lexer->YYText(), "THEN") != 0)
-		Error("THEN attendu après IF");
-	
-	current=(TOKEN) lexer->yylex();
-	Statement();
-
-	current=(TOKEN) lexer->yylex();
-	
-	if (current==KEYBOARD && strcmp(lexer->YYText(), "ELSE") == 0)
-		current=(TOKEN) lexer->yylex();
-		Statement();
-	*/
 	unsigned long long tag=TagNumber++;
 	current=(TOKEN) lexer->yylex();
 
@@ -592,22 +541,7 @@ void IfStatement(){
 // "WHILE" Expression "DO" Statement
 
 void WhileStatement(){
-	/*
-	current=(TOKEN) lexer->yylex();
-	TYPES type = Expression();
-	if (type != BOOLEAN){
-		Error("Expression type WhileStatement must be Boolean");
-	}
-
-	current=(TOKEN) lexer->yylex();
 	
-
-	if (current!=KEYBOARD || strcmp(lexer->YYText(), "DO") != 0){
-		Error("DO Attendu après WHILE");
-	}
-
-	Statement();
-	*/
 	unsigned long long tag=TagNumber++;
 	cout<<"While"<<tag<<":"<<endl;
 	current=(TOKEN) lexer->yylex();
@@ -634,26 +568,6 @@ void WhileStatement(){
 // ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
 void ForStatement(){
 
-	/*
-	current=(TOKEN) lexer->yylex();
-	
-	AssignementStatement();
-
-	current=(TOKEN) lexer->yylex();
-
-	if (current!=KEYBOARD || strcmp(lexer->YYText(), "To") != 0){
-		Error("To Attendu après FOR");
-	}
-
-	Expression();
-
-	if (current!=KEYBOARD || strcmp(lexer->YYText(), "DO") != 0){
-		Error("DO Attendu après WHILE");
-	}
-
-	Statement();
-
-	*/
 	unsigned long long tag=TagNumber;
 	current=(TOKEN) lexer->yylex();
 	
@@ -681,10 +595,7 @@ void ForStatement(){
 		
 		cout << "Loop" << tag << ":" << endl;
 		cout << "\tpop %rax \t #get the result of expression"<<endl;
-		
-		//cout << "\tmovq $" << variable << ", %rax \t #putting " << variable << " in rax for ddd so i can look whats in f " << endl;
-		//cout << "\tcmpq $" << nbExpression << ", f"<<endl;
-		cout << "\tcmpq %rax, f"<<endl;
+		cout << "\tcmpq %rax, "<< variable << endl;
 		cout << "\tjae EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
 		cout << "\tpush %rax" << endl;
 
@@ -696,45 +607,13 @@ void ForStatement(){
 
 		// +1 at variable 
 
-		cout << "\taddq $1, f \t #adding one to f" << endl;
+		cout << "\taddq $1,  "<< variable << " \t #adding one to f" << endl;
 		
 
 
 		cout << "\tjmp Loop"<< tag << endl;
 		
 		
-		/*
-		current=(TOKEN) lexer->yylex();
-		TYPES type2 = Expression();
-		if (type != type2){
-			Error("La variable et l'expression doivent avoir le même type dans un for !");
-		}
-	
-
-		cout << "Loop" << tag << ":" << endl;
-		cout << "\tpop (%rbx) \t #get the result of expression"<<endl;
-		
-		cout << "\tmovq $" << variable << ", %rax \t #putting " << variable << " in rax for cmp" << endl;
-		cout << "\tcmpq %rbx, %rax"<<endl;
-		
-
-		cout << "\tje EndLoop" << tag << " #jump if equal we out of the loop" <<endl;
-		cout << "\tpush (%rbx)" << endl;
-
-		if(current!=KEYBOARD || strcmp(lexer->YYText(), "DO")!=0){
-			Error("mot-clé DO attendu");
-		}
-		current = (TOKEN) lexer->yylex();
-		Statement();
-
-		// +1 at variable 
-
-		cout << "\taddq $1, f \t #adding one to rax" << endl;
-		
-
-
-		cout << "\tjmp Loop"<< tag << endl;
-		*/
 	}
 
 	else if (c == "DOWNTO"){
@@ -749,7 +628,7 @@ void ForStatement(){
 		cout << "Loop" << tag << ":" << endl;
 		cout << "\tpop %rax \t #get the result of expression"<<endl;
 
-		cout << "\tcmpq %rax, f"<<endl;
+		cout << "\tcmpq %rax, " << variable <<e ndl;
 		
 		cout << "\tpush %rax" << endl;
 
@@ -764,7 +643,7 @@ void ForStatement(){
 
 		// -1 at variable 
 
-		cout << "\tsubq $1, f \t # sub one to f" << endl;
+		cout << "\tsubq $1, " << variable  << " \t # sub one to f" << endl;
 		cout << "\tjmp Loop"<< tag << endl;
 	}
 	else {
@@ -887,8 +766,6 @@ void CaseStatement(void){
 
 	
 
-	// --------
-
 	current = (TOKEN) lexer->yylex();
 	unsigned long long tag=TagNumber++;
 
@@ -1010,13 +887,7 @@ void RepeatStatement(void){
 // Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement
 void Statement(void){
 
-	// current = (TOKEN) lexer->yylex();
 	
-	// look if id and not :=
-	// if :=
-	// if (strcmp(lexer->YYText(),":=") == 0){
-	// 	AssignementStatement();
-	// }
 	
 	
 	if (current == ID){
